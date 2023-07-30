@@ -4,7 +4,7 @@
 
 
 
-## Kubernetes Setup Using Kubeadm In AWS EC2 Ubuntu Serverse.
+## Kubernetes Setup Using Kubeadm In AWS EC2 Ubuntu Servers.
 ##### Prerequisite
 + AWS Acccount.
 + Create 3 - Ubuntu Servers -- 18.04.
@@ -15,9 +15,12 @@
 + Attach Security Group to EC2 Instance/nodes.
 
 ## Assign hostname &  login as ‘root’ user because the following set of commands need to be executed with ‘sudo’ permissions.
+```sh
 sudo hostnamectl set-hostname master
 sudo -i
+```
 
+``` sh
 #!/bin/bash
 # common.sh
 # copy this script and run in all master and worker nodes
@@ -118,16 +121,19 @@ systemctl daemon-reload
 systemctl start kubelet
 systemctl enable kubelet.service
 ```
-## exit as root user & execute the below commands as normal ubuntu user
+## Initialised the control plane in the master node as the root user.
+``` sh
+# Initialize Kubernetes control plane by running the below commond as root user.
+sudo kubeadm init
+```
+
+## exit as root user 
 ```sh
 sudo su - ubuntu
 ```
 
-## Initialised the control plane.
-``` sh
-# Initialize Kubernates master by executing below commond.
-sudo kubeadm init
-
+## execute the below commands as a normal ubuntu user
+```sh 
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -135,13 +141,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ## To verify, if kubectl is working or not, run the following command.
 kubectl get pods -A
 ```sh
-#deploy the network plugin - weave network
-kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
-kubectl get pods -A
-kubectl get node
-```
-```sh
-#deploy the network plugin - weave network
+#deploy the network plugin - weave network and verify
 kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 kubectl get pods -A
 kubectl get node
@@ -152,5 +152,15 @@ kubeadm join 172.31.10.12:6443 --token cdm6fo.dhbrxyleqe5suy6e \
         --discovery-token-ca-cert-hash sha256:1fc51686afd16c46102c018acb71ef9537c1226e331840e7d401630b96298e7d
 ```
 
+##  Generate the master join token on the master node
+```sh
+kubeadm token create --print-join-command
+``` 
+##  Copy the token and run it on worker nodes to add them to the control plane
+# Replace the token below with yours. This step is important when you restart your nodes
+```sh
+kubeadm join 172.31.10.12:6443 --token cdm6fo.dhbrxyleqe5suy6e \
+        --discovery-token-ca-cert-hash sha256:1fc51686afd16c46102c018acb71ef9537c1226e331840e7d401630b96298e7d
+```
 
 
